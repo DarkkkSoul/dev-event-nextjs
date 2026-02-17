@@ -31,7 +31,7 @@ const eventSchema = new Schema<IEvent>({
   slug: {
     type: String,
     unique: true,
-    required: true,
+    lowercase: true,
     trim: true
   },
   description: {
@@ -92,7 +92,7 @@ const eventSchema = new Schema<IEvent>({
     type: [String],
     required: [true, 'Agenda is required'],
     validate: {
-      validator: function(agenda: string[]) {
+      validator: function (agenda: string[]) {
         return agenda.length > 0 && agenda.every(item => item.trim().length > 0);
       },
       message: 'Agenda must contain at least one non-empty item'
@@ -108,7 +108,7 @@ const eventSchema = new Schema<IEvent>({
     type: [String],
     required: [true, 'Tags are required'],
     validate: {
-      validator: function(tags: string[]) {
+      validator: function (tags: string[]) {
         return tags.length > 0 && tags.every(tag => tag.trim().length > 0);
       },
       message: 'Tags must contain at least one non-empty item'
@@ -119,9 +119,9 @@ const eventSchema = new Schema<IEvent>({
 });
 
 // Pre-save hook for slug generation and date/time normalization
-eventSchema.pre('save', async function(next) {
+eventSchema.pre('save', async function (next) {
   const event = this;
-  
+
   // Generate slug from title if title is modified or slug is not set
   if (!event.slug || (event.isModified('title') && event.title)) {
     // Generate URL-friendly slug
@@ -132,7 +132,7 @@ eventSchema.pre('save', async function(next) {
       .replace(/-+/g, '-') // Replace multiple hyphens with single
       .trim();
   }
-  
+
   // Normalize date to ISO format if date is modified
   if (event.isModified('date') && event.date) {
     try {
@@ -144,7 +144,7 @@ eventSchema.pre('save', async function(next) {
       return next(new Error('Invalid date format'));
     }
   }
-  
+
   // Normalize time format if time is modified
   if (event.isModified('time') && event.time) {
     // Ensure time is in HH:MM format
@@ -153,7 +153,7 @@ eventSchema.pre('save', async function(next) {
       return next(new Error('Time must be in HH:MM format'));
     }
   }
-  
+
   next();
 });
 
@@ -161,4 +161,4 @@ eventSchema.pre('save', async function(next) {
 eventSchema.index({ slug: 1 }, { unique: true });
 
 // Create and export Event model
-export const Event = mongoose.model<IEvent>('Event', eventSchema);
+export const Event = mongoose.models.Event || mongoose.model<IEvent>('Event', eventSchema);
